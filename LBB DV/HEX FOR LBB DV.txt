@@ -1,0 +1,23 @@
+Background: #231F20
+Orange: #EAA126
+Light Orange: #F9FF81
+Lighter Orange: #FCFFBE
+CP Yellow: #FDF202
+Yellow: #ECD203
+CP Red: #EF3524
+Red: #BE1F24
+Pink: #F21F66
+CP Pink: #FF003C
+Light Pink: #F16393
+Lighter Pink: #CAB0B9
+Purple: #721C54
+Darker Purple: #791466
+White: #F2F2F2
+CP Blue: #00F0FF
+Light Blue: #6BC4E3
+Lighter Blue: #C4FEFE
+Med Blue: #5291B2
+Dark Blue: #345EA0
+Med Blue2: #3882B2
+Dark Blue2: #0C5AA4
+Text: #3E484F

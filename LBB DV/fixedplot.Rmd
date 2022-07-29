@@ -1,0 +1,712 @@
+---
+title: "PlotFix"
+author: "Rangga"
+date: "2022-07-27"
+output: 
+  html_document:
+    css: bootstrap.min.css
+---
+
+
+```{r setup, include=FALSE}
+# clear-up the environment
+rm(list = ls())
+
+# chunk options
+knitr::opts_chunk$set(
+  message = FALSE,
+  warning = FALSE,
+  fig.align = "center",
+  comment = "#>"
+)
+
+# scientific notation
+options(scipen = 9999)
+```
+
+#Library
+
+```{r}
+library(tidyverse)
+library(scales)
+library(ggthemes)
+library(gridExtra)
+library(ggfx)
+library(extrafont)
+library(scales)
+library(lubridate)
+```
+
+#Read Data
+
+```{r}
+bgdata <- read.csv("datainput/bgg_db_1806.csv")
+head(bgdata)
+```
+
+# Trend and Popularity
+
+## Number of Games Released
+
+```{r}
+#Prepare the Data
+bgdata$year <- as.character(bgdata$year)
+
+bgtrend <-
+bgdata %>% 
+  select(names,year) %>% 
+  filter(year >= 1955, year <= 2017) %>% 
+  group_by(year) %>% 
+  summarise(count = n()) %>% 
+  ungroup()
+```
+
+```{r}
+#Plot Code
+ggplot(bgtrend, aes(year, count))+
+    with_outer_glow(geom_line(aes(group=1),color = "#CAB0B9"), colour = "#F21F66", sigma = 10, expand = 0.7)+ 
+    with_outer_glow(geom_point(color = "#CAB0B9"), colour = "#F21F66", sigma = 10, expand = 0.7)+ 
+    scale_x_discrete(breaks = seq(1957,2017,5))+ 
+    scale_y_continuous(breaks = seq(0,420,60))+ 
+    labs(x = "Year",
+         y = NULL,
+         title = "Trend by Games Released per Year")+ 
+    theme(plot.background = element_rect(fill = "#231F20", color = "#231F20"),
+        panel.background = element_rect(fill = "#231F20"),
+        panel.grid = element_line(alpha(colour = "#525252",alpha = 0.2)),
+        plot.title = element_text(colour = "#FDF202",face = "bold", family = "Copperplate Gothic Bold"),
+        plot.subtitle = element_text(colour = "#F2F2F2", face = "italic", size = 10),
+        axis.title.x = element_text(colour = "#FDF202",family = "OCR A Extended", face = "bold"),
+        axis.text.x = element_text(color = "White", family = "OCR A Extended", face = "bold"),
+        axis.text.y = element_text(color = "White", face = "italic", family = "OCR A Extended"))
+```
+
+## Most Popular Games
+
+```{r}
+#Prepare the Data
+bgpopular <-
+bgdata %>% 
+  select(names,owned) %>% 
+  group_by(names) %>% 
+  summarise(total = sum(owned)) %>%
+  ungroup() %>% 
+  top_n(10)
+```
+
+```{r}
+#Plot Code
+ggplot(bgpopular, aes(reorder(names,total), total)) +
+  with_outer_glow(geom_segment(aes(x = reorder(names,total), 
+                                   xend = reorder(names,total), 
+                                   y = 0, 
+                                   yend = total), color = "#C4FEFE", size = 0.5),colour = "#00F0FF") +
+  with_outer_glow(geom_point(color = "#CAB0B9", size = 1),colour = "#F21F66#ECD203")+
+  coord_flip()+
+  scale_y_continuous(breaks = seq(0,112000,22400),
+                     labels = comma)+
+  labs(x = NULL,
+       y = "Total Owned",
+       title = "Most Popular Games",
+       subtitle = "by num. of Owned")+
+  theme(plot.background = element_rect(fill = "#231F20", color = "#231F20"),
+        panel.background = element_rect(fill = "#231F20"),
+        panel.grid = element_line(alpha(colour = "#231F20")),
+        plot.title = element_text(colour = "#FDF202",face = "bold", family = "Copperplate Gothic Bold"),
+        plot.subtitle = element_text(colour = "#F2F2F2", face = "italic", size = 10),
+        axis.title.x = element_text(colour = "#FDF202", family = "OCR A Extended", face = "bold"),
+        axis.text.x = element_text(color = "White", family = "OCR A Extended", face = "italic"),
+        axis.text.y = element_text(color = "White", face = "italic", family = "OCR A Extended"))
+```
+
+## Most Rated Games
+
+```{r}
+#Prepare the Data
+bgvotes <-
+bgdata %>% 
+  select(names,num_votes) %>% 
+  group_by(names) %>% 
+  summarise(total = sum(num_votes)) %>%
+  ungroup() %>% 
+  top_n(10)
+```
+
+```{r}
+#Plot Code
+ggplot(bgvotes, aes(reorder(names,total), total)) +
+  with_outer_glow(geom_segment(aes(x = reorder(names,total), 
+                                   xend = reorder(names,total), 
+                                   y = 0, 
+                                   yend = total), color = "#C4FEFE", size = 0.5),colour = "#00F0FF") +
+  with_outer_glow(geom_point(color = "#CAB0B9", size = 1),colour = "#F21F66#ECD203")+
+  coord_flip()+
+  scale_y_continuous(breaks = seq(0,80000,20000),
+                     labels = comma)+
+  labs(x = NULL,
+       y = "Total Votes",
+       title = "Most Rated Games",
+       subtitle = "by num. of Votes")+
+  theme(plot.background = element_rect(fill = "#231F20", color = "#231F20"),
+        panel.background = element_rect(fill = "#231F20"),
+        panel.grid = element_line(alpha(colour = "#231F20")),
+        plot.title = element_text(colour = "#FDF202",face = "bold", family = "Copperplate Gothic Bold"),
+        plot.subtitle = element_text(colour = "#F2F2F2", face = "italic", size = 10),
+        axis.title.x = element_text(colour = "#FDF202", family = "OCR A Extended", face = "bold"),
+        axis.text.x = element_text(color = "White", family = "OCR A Extended", face = "italic"),
+        axis.text.y = element_text(color = "White", face = "italic", family = "OCR A Extended"))
+```
+
+#Rating Explanation
+
+##Rating Distribution
+
+```{r}
+#Prepare the Data
+rating <- 
+  bgdata %>% 
+  select(avg_rating,geek_rating) %>% 
+  gather(rating) %>% 
+  mutate(rating = as.factor(rating))
+```
+
+```{r}
+#Plot Code
+ggplot(rating,aes(x=value, col = rating)) + 
+  with_outer_glow(geom_density(data = .%>% filter( rating == "avg_rating"),
+                               alpha=0,fill = "#231F20",size=0.4),colour="#FDF202",
+                  sigma = 10,expand = 0.7)+
+  with_outer_glow(geom_density(data = .%>% filter( rating == "geek_rating"),
+                               alpha=0,fill = "#231F20",size=0.4),colour="#00F0FF",
+                  sigma = 10,expand = 0.7)+
+  scale_x_continuous(breaks = seq(3,9,1))+
+  scale_color_manual(values = c("#FCFFBE", "#C4FEFE"),
+                     labels=c('Avg. Rating', 'Geek Rating'))+
+  labs(x= "Rating",
+       y= "",
+       title = "Average Rating VS Geek Rating")+
+  theme(legend.position="top",legend.direction="horizontal",
+        legend.background = element_rect(fill="#231F20", color = "#231F20"),
+        legend.key = element_rect(fill="#231F20", color = "#231F20"),
+        legend.title = element_text(colour = "#231F20", face ="bold", size = 9),
+        legend.text = element_text(color="White", face ="italic"),
+        legend.key.size= unit(0.4, 'cm'),
+        plot.background = element_rect(fill = "#231F20", color = "#231F20"),
+        panel.background = element_rect(fill = "#231F20"),
+        panel.grid = element_line(alpha(colour = "#525252",alpha = 0.2)),
+        panel.grid.major.x = element_line(colour ="#231F20"),
+        panel.grid.minor.x = element_line(colour ="#231F20"),
+        plot.title = element_text(colour = "#FDF202",face = "bold", family="Copperplate Gothic Bold"),
+        axis.title.x = element_text(colour = "#FDF202",family="OCR A Extended",face="bold"),
+        axis.text.x=element_text(color="White",family="OCR A Extended", face="italic"),
+        axis.text.y=element_text(color="White", face="italic", family = "OCR A Extended"))
+```
+
+## Geek Rating (Votes vs Owned)
+
+```{r}
+#Prepare the Data
+gq0 <- quantile(bgdata$geek_rating)[1] #Get each quantiles
+gq25 <- quantile(bgdata$geek_rating)[2]
+gq50 <- quantile(bgdata$geek_rating)[3]
+gq75 <- quantile(bgdata$geek_rating)[4]
+gq100 <- quantile(bgdata$geek_rating)[5]
+
+#Create a function
+convert_ratings = function(x){
+  if(x <= gq25) {x <- "0-25%"}
+  else if(x <= gq50) {x <- "25-50%"}
+  else if(x <= gq75) {x <- "50-75%"}
+  else {x <- "75-100%"}
+}
+
+bgdata$geek_group <- sapply(X = bgdata$geek_rating, 
+                            FUN = convert_ratings)
+geek.group <- bgdata[,c("num_votes","owned","geek_group")]
+```
+
+```{r}
+#Plot Code
+ggplot(geek.group,aes(log(owned),log(num_votes), col=geek_group))+
+  with_bloom(geom_point(alpha=0.8),strength = 2)+
+  scale_color_manual(values = c("#00F0FF","#EF3524","#FDF202","#F16393"))+
+  labs(x= "Owned",
+       y= "Votes",
+       title = "Owned VS Num. of Votes",
+       subtitle = "Relationship by Geek Rating Groups Quantiles",
+       col = "Geek Quantiles:")+
+  theme(legend.position="right",legend.direction="vertical",
+        legend.background = element_rect(fill="#231F20", color = "#231F20"),
+        legend.key = element_rect(fill="#231F20", color = "#231F20"),
+        legend.title = element_text(colour = "#FDF202", face ="bold", size = 9),
+        legend.text = element_text(color="White", face ="italic", family="OCR A Extended"),
+        plot.background = element_rect(fill = "#231F20", color = "#231F20"),
+        legend.key.size= unit(0.3, 'cm'),
+        panel.background = element_rect(fill = "#231F20"),
+        panel.grid = element_line(alpha(colour = "#525252",alpha = 0.2)),
+        panel.grid.minor.x = element_line(colour ="#231F20"),
+        plot.title = element_text(colour = "#FDF202",face = "bold", family="Copperplate Gothic Bold"),
+        plot.subtitle = element_text(colour = "#F2F2F2", face = "italic", size = 10),
+        axis.title.x = element_text(colour = "#FDF202",family="OCR A Extended",face="bold"),
+        axis.title.y = element_text(colour = "#FDF202",family="OCR A Extended",face="bold"),
+        axis.text.x=element_text(color="White",family="OCR A Extended", face="italic"),
+        axis.text.y=element_text(color="White", face="italic", family = "OCR A Extended"))
+```
+
+## Average Rating (Votes vs Owned)
+
+```{r}
+#Prepare the Data
+aq0 <- quantile(bgdata$avg_rating)[1] #Get each Quantiles
+aq25 <- quantile(bgdata$avg_rating)[2]
+aq50 <- quantile(bgdata$avg_rating)[3]
+aq75 <- quantile(bgdata$avg_rating)[4]
+aq100 <- quantile(bgdata$avg_rating)[5]
+
+#Create a function
+convert_ratings = function(x){
+  if(x <= aq25) {x <- "0-25%"}
+  else if(x <= aq50) {x <- "25-50%"}
+  else if(x <= aq75) {x <- "50-75%"}
+  else {x <- "75-100%"}
+}
+
+bgdata$avg_group <- sapply(X = bgdata$avg_rating, 
+                            FUN = convert_ratings)
+avg.group <- bgdata[,c("num_votes","owned","avg_group")]
+```
+
+```{r}
+ggplot(avg.group,aes(log(owned),log(num_votes), col=avg_group))+
+  with_bloom(geom_point(alpha=0.8),strength = 2)+
+  scale_color_manual(values = c("#00F0FF","#EF3524","#FDF202","#F16393"))+
+  labs(x= "Owned",
+       y= "Votes",
+       title = "Owned VS Num. of Votes",
+       subtitle = "Relationship by Average Rating Groups Quantiles",
+       col = "Average Quantiles:")+
+  theme(legend.position="right",legend.direction="vertical",
+        legend.background = element_rect(fill="#231F20", color = "#231F20"),
+        legend.key = element_rect(fill="#231F20", color = "#231F20"),
+        legend.title = element_text(colour = "#FDF202", face ="bold", size = 9),
+        legend.text = element_text(color="White", face ="italic", family="OCR A Extended"),
+        plot.background = element_rect(fill = "#231F20", color = "#231F20"),
+        legend.key.size= unit(0.3, 'cm'),
+        panel.background = element_rect(fill = "#231F20"),
+        panel.grid = element_line(alpha(colour = "#525252",alpha = 0.2)),
+        panel.grid.minor.x = element_line(colour ="#231F20"),
+        plot.title = element_text(colour = "#FDF202",face = "bold", family="Copperplate Gothic Bold"),
+        plot.subtitle = element_text(colour = "#F2F2F2", face = "italic", size = 10),
+        axis.title.x = element_text(colour = "#FDF202",family="OCR A Extended",face="bold"),
+        axis.title.y = element_text(colour = "#FDF202",family="OCR A Extended",face="bold"),
+        axis.text.x=element_text(color="White",family="OCR A Extended", face="italic"),
+        axis.text.y=element_text(color="White", face="italic", family = "OCR A Extended"))
+```
+
+# Games Category & Mechanics
+
+```{r}
+#Prepare the Data
+game_cat<-as.data.frame(table(str_trim(unlist(strsplit(str_trim(as.character(bgdata$category)), ", ")))))
+game_mec<-as.data.frame(table(str_trim(unlist(strsplit(str_trim(as.character(bgdata$mechanic)), ", ")))))
+
+top5_cat <- game_cat[order(game_cat$Freq, decreasing=T)[1:5],]
+top5_mec <- game_mec[order(game_mec$Freq, decreasing=T)[1:5],]
+
+top5_cat$fraction <- round((top5_cat$Freq / sum(top5_cat$Freq))*100)
+top5_cat$fraction <- sub("$", "%", top5_cat$fraction)
+
+hsizec <- 2
+top5_cat <- top5_cat %>% 
+  mutate(x = hsizec)
+
+top5_mec$fraction <- round((top5_mec$Freq / sum(top5_mec$Freq))*100)
+top5_mec$fraction <- sub("$", "%", top5_mec$fraction)
+
+hsizem <- 2
+top5_mec <- top5_mec %>% 
+  mutate(x = hsizem)
+```
+
+## Top 5 Categories
+
+```{r}
+#Plot Code
+ggplot(top5_cat, aes(x = hsizec, y = Freq, fill = Var1, col = Var1)) +
+  with_bloom(geom_col(fill="#231F20"),sigma = 15, strength=2) +
+  with_bloom(geom_text(aes(label = fraction),
+            color = "#F2F2F2",
+            position = position_stack(vjust = 0.5),family = "OCR A Extended")) +
+  guides(fill = "none") + 
+  labs(x=NULL,
+       y=NULL,
+       title = "Top 5 Categories",
+       subtitle = "by Total Games",
+       col = "Categories:")+
+  scale_color_manual(values = c("#00F0FF","#FF003C","#FDF202","#EF3524","#D039DD"))+
+  scale_fill_manual(values = c("#231F20","#231F20","#231F20","#231F20","#231F20"))+
+  xlim(c(0.2, hsizec + 0.5)) +
+  coord_polar(theta = "y") +
+  theme(legend.position="right",legend.direction="vertical",
+        legend.background = element_rect(fill="#231F20", color = "#231F20"),
+        legend.key = element_rect(fill="#231F20", color = "#231F20"),
+        legend.title = element_text(colour = "#FDF202", face ="bold", size = 9),
+        legend.text = element_text(color="White", face ="italic", family="Times New Roman"),
+        legend.key.size= unit(0.3, 'cm'),
+        plot.background = element_rect(fill="#231F20"),
+        panel.background = element_rect(fill = "#231F20"),
+        panel.grid = element_line(colour = "#231F20"),
+        plot.title = element_text(colour = "#FDF202",face = "bold", family="Copperplate Gothic Bold"),
+        plot.subtitle = element_text(colour = "#F2F2F2", face = "italic", size = 10),
+        axis.text.x=element_text(color="#231F20"),
+        axis.text.y=element_text(color="#231F20"))
+```
+
+## Top 5 Mechanics
+
+```{r}
+#Plot Code
+ggplot(top5_mec, aes(x = hsizem, y = Freq, fill = Var1, col = Var1)) +
+  with_bloom(geom_col(fill="#231F20"),sigma = 15, strength=2) +
+  with_bloom(geom_text(aes(label = fraction),
+            color = "#F2F2F2",
+            position = position_stack(vjust = 0.5),
+            family = "OCR A Extended")) +
+  guides(fill = "none") + 
+  labs(x=NULL,
+       y=NULL,
+       title = "Top 5 Mechanics",
+       subtitle = "by Total Games",
+       col = "Categories:")+
+  scale_color_manual(values = c("#00F0FF","#FF003C","#FDF202","#EF3524","#D039DD"))+
+  scale_fill_manual(values = c("#231F20","#231F20","#231F20","#231F20","#231F20"))+
+  xlim(c(0.2, hsizem + 0.5)) +
+  coord_polar(theta = "y") +
+  theme(legend.position="right",legend.direction="vertical",
+        legend.background = element_rect(fill="#231F20", color = "#231F20"),
+        legend.key = element_rect(fill="#231F20", color = "#231F20"),
+        legend.title = element_text(colour = "#FDF202", face ="bold", size = 9),
+        legend.text = element_text(color="White", face ="italic", family="Times New Roman"),
+        legend.key.size= unit(0.3, 'cm'),
+        plot.background = element_rect(fill="#231F20"),
+        panel.background = element_rect(fill = "#231F20"),
+        panel.grid = element_line(colour = "#231F20"),
+        plot.title = element_text(colour = "#FDF202",face = "bold", family="Copperplate Gothic Bold"),
+        plot.subtitle = element_text(colour = "#F2F2F2", face = "italic", size = 10),
+        axis.text.x=element_text(color="#231F20"),
+        axis.text.y=element_text(color="#231F20"))
+```
+
+#Players
+
+## Games with most Max Players Allowed
+```{r}
+bgdata %>% 
+  select(names,max_players) %>% 
+  group_by(names) %>%
+  ungroup() %>% 
+  top_n(1)
+```
+
+## Age Distribution
+
+```{r}
+#Prepare the Data
+age.dist <- 
+  bgdata %>% 
+  select(age) %>% 
+  filter(age <= 30)
+```
+
+```{r}
+ggplot(age.dist, aes(x=age))+
+  with_outer_glow(geom_density(color = "#C4FEFE"),colour = "#00F0FF",sigma = 10,expand = 0.7)+
+    scale_x_continuous(breaks = seq(0,20,4))+
+    labs(x= "Age",
+         y= NULL,
+         title = "Age Distribution")+
+    theme(plot.background = element_rect(fill = "#231F20", color = "#231F20"),
+        panel.background = element_rect(fill = "#231F20"),
+        panel.grid = element_line(alpha(colour = "#525252",alpha = 0.2)),
+        panel.grid.major.x = element_line(colour ="#231F20"),
+        panel.grid.minor.x = element_line(colour ="#231F20"),
+        plot.title = element_text(colour = "#FDF202",face = "bold", family="Copperplate Gothic Bold"),
+        plot.subtitle = element_text(colour = "#F2F2F2", face = "italic", size = 10),
+        axis.title.x = element_text(colour = "#FDF202",family="OCR A Extended",face="bold"),
+        axis.text.x=element_text(color="White",family="OCR A Extended", face="italic"),
+        axis.text.y=element_text(color="White", face="italic", family = "OCR A Extended"))
+```
+
+## Rating by Group of Age
+
+```{r}
+#Prepare the Data
+convert_ages = function(x){
+  if(x <= 5) {x <- "0-5"}
+  else if(x > 5 & x <= 10) {x <- "6-10"}
+  else if(x > 10 & x <= 15) {x <- "11-15"}
+  else if(x > 15 & x <= 20) {x <- "16-20"}
+  else {x <- "21+"}
+}
+
+bgdata$age_group <- sapply(X = bgdata$age, 
+                            FUN = convert_ages)
+age.rating <- bgdata %>% select(age_group,avg_rating)
+dataMedian <- summarise(group_by(age.rating, age_group), rating_med = median(avg_rating))
+dataMedian$rating_med <- round(dataMedian$rating_med,2)
+```
+
+```{r}
+#Plot Code
+ggplot(age.rating,aes(age_group,avg_rating, col=age_group))+
+  with_bloom(geom_boxplot(fill="#231F20"),sigma=15,strength = 2)+
+  geom_text(data = dataMedian, aes(age_group, rating_med, label=rating_med),
+            family = "OCR A Extended",
+            position = position_dodge(width = 0.8), size = 3, vjust = -0.5)+
+  scale_color_manual(breaks = c("0-5", "6-10", "11-15","16-20","21+"),
+                     values = c("#00F0FF","#FF003C","#FDF202","#EF3524","#D039DD"))+
+  scale_fill_manual(values = c("#231F20","#231F20","#231F20","#231F20","#231F20"))+
+  scale_x_discrete(limits = c("0-5", "6-10", "11-15","16-20","21+"))+
+  labs(x= "Age",
+       y= "Rating",
+       title = "Rating vs Age",
+       subtitle = "average Rating per Group of Age",
+       col = "Age Groups:")+
+  theme(legend.position="right",legend.direction="vertical",
+        legend.background = element_rect(fill="#231F20", color = "#231F20"),
+        legend.key = element_rect(fill="#231F20", color = "#231F20"),
+        legend.title = element_text(colour = "#FDF202", face ="bold", size = 9),
+        legend.text = element_text(color="White", face ="italic", family="OCR A Extended"),
+        legend.key.size= unit(0.5, 'cm'),
+        plot.background = element_rect(fill = "#231F20", color = "#231F20"),
+        panel.background = element_rect(fill = "#231F20"),
+        panel.grid = element_line(alpha(colour = "#231F20",alpha = 0.2)),
+        panel.grid.major.x = element_line(colour ="#231F20"),
+        panel.grid.minor.x = element_line(colour ="#231F20"),
+        plot.title = element_text(colour = "#FDF202",face = "bold", family="Copperplate Gothic Bold"),
+        plot.subtitle = element_text(colour = "#F2F2F2", face = "italic", size = 10),
+        axis.title.x = element_text(colour = "#FDF202",family="OCR A Extended",face="bold"),
+        axis.title.y = element_text(colour = "#FDF202",family="OCR A Extended",face="bold"),
+        axis.text.x=element_text(color="White",family="OCR A Extended", face="italic"),
+        axis.text.y=element_text(color="White", face="italic", family = "OCR A Extended"))
+```
+## Votes and Owned Relationship by Age
+
+```{r}
+#Plot Code
+age.rating.o <- bgdata[,c("age_group","owned","num_votes","avg_rating")]
+ggplot(age.rating.o,aes(log(num_votes),log(owned), col=age_group))+
+  with_bloom(geom_point(alpha=0.8),strength = 3)+
+  scale_color_manual(breaks = c("0-5", "6-10", "11-15","16-20","21+"),
+                     values = c("#00F0FF","#FF003C","#FDF202","#EF3524","#D039DD"))+
+  labs(x= "Owned",
+       y= "Votes",
+       title = "Owned VS Num. of Votes",
+       subtitle = "Relationship by average Rating Groups Quantiles",
+       col = "Avg. Quantiles:")+
+  theme(legend.position="right",legend.direction="vertical",
+        legend.background = element_rect(fill="#231F20", color = "#231F20"),
+        legend.key = element_rect(fill="#231F20", color = "#231F20"),
+        legend.title = element_text(colour = "#FDF202", face ="bold", size = 9),
+        legend.text = element_text(color="White", face ="italic", family="OCR A Extended"),
+        legend.key.size= unit(0.3, 'cm'),
+        plot.background = element_rect(fill = "#231F20", color = "#231F20"),
+        panel.background = element_rect(fill = "#231F20"),
+        panel.grid = element_line(alpha(colour = "#525252",alpha = 0.2)),
+        panel.grid.minor.x = element_line(colour ="#231F20"),
+        plot.title = element_text(colour = "#FDF202",face = "bold", family="Copperplate Gothic Bold"),
+        plot.subtitle = element_text(colour = "#F2F2F2", face = "italic", size = 10),
+        axis.title.x = element_text(colour = "#FDF202",family="OCR A Extended",face="bold"),
+        axis.title.y = element_text(colour = "#FDF202",family="OCR A Extended",face="bold"),
+        axis.text.x=element_text(color="White",family="OCR A Extended", face="italic"),
+        axis.text.y=element_text(color="White", face="italic", family = "OCR A Extended"))
+```
+
+#Meet your Maker
+
+## Designer with Most Games
+
+```{r}
+#Prepare the Data
+bgdesigner <- 
+bgdata %>%
+    filter(!designer %in% c('none', '(Uncredited)')) %>%
+    group_by(designer) %>%
+    summarize(count=n()) %>%
+    arrange(-count) %>%
+    ungroup() %>% 
+    top_n(10,count)
+```
+
+```{r}
+#Plot Code
+ggplot(bgdesigner, aes(reorder(designer, count), count, col = count)) + 
+    with_bloom(geom_bar(stat='identity', fill='#231F20', width=0.8),sigma = 15, strength=2) +
+    scale_color_gradient(low="#FDF202", high = "#EF3524") +
+    scale_y_continuous(breaks = seq(0,150,15))+
+    coord_flip()+
+    labs(x= NULL,
+         y= "Total",
+         title = "Designer",
+         subtitle = "by Games created.")+
+    theme(legend.position="none",
+          plot.background = element_rect(fill = "#231F20", color = "#231F20"),
+          panel.background = element_rect(fill = "#231F20"),
+          panel.grid = element_line(alpha(colour = "#231F20")),
+          plot.title = element_text(colour = "#FDF202",face = "bold", family="Copperplate Gothic Bold"),
+          plot.subtitle = element_text(colour = "#F2F2F2", face = "italic", size = 10),
+          axis.title.x = element_text(colour = "#FDF202",family="OCR A Extended",face="bold"),
+          axis.text.x=element_text(color="White",family="OCR A Extended"),
+          axis.text.y=element_text(color="White", face="italic", family = "OCR A Extended"))
+```
+
+## Designer with Most Popular Games.
+
+```{r}
+#Prepare the Data
+bgdesigner.pop <- 
+    bgdata %>%
+    filter(!designer %in% c('none', '(Uncredited)')) %>%
+    group_by(designer) %>%
+    summarize(count=n(), owned=sum(owned)) %>%
+    filter(count >= 5) %>%
+    arrange(-owned) %>%
+    ungroup() %>% 
+    top_n(10)
+```
+
+```{r}
+#Plot Code
+ggplot(bgdesigner.pop, aes(reorder(designer, owned), owned, col = owned)) + 
+    with_bloom(geom_bar(stat='identity', fill='#231F20', width=0.8),sigma = 15, strength=2) +
+    scale_color_gradient(low="#FDF202", high = "#EF3524") +
+    scale_y_continuous(breaks = seq(0,4e5,5e4),
+                       labels = comma)+
+    coord_flip()+
+    labs(x= NULL,
+         y= "Total",
+         title = "Designer",
+         subtitle = "by Games owned.")+
+    theme(legend.position="none",
+          plot.background = element_rect(fill = "#231F20", color = "#231F20"),
+          panel.background = element_rect(fill = "#231F20"),
+          panel.grid = element_line(alpha(colour = "#231F20")),
+          plot.title = element_text(colour = "#FDF202",face = "bold", family="Copperplate Gothic Bold"),
+          plot.subtitle = element_text(colour = "#F2F2F2", face = "italic", size = 10),
+          axis.title.x = element_text(colour = "#FDF202",family="OCR A Extended",face="bold"),
+          axis.text.x=element_text(color="White",family="OCR A Extended", angle = 15),
+          axis.text.y=element_text(color="White", face="italic", family = "OCR A Extended"))
+```
+
+# Complexity
+
+## Relationship between Weight and Max Times
+
+```{r}
+#Prepare the Data
+convert_weight = function(x){
+  if(x <= 1) {x <- "1"}
+  else if(x <= 2) {x <- "2"}
+  else if(x <= 3) {x <- "3"}
+  else if(x <= 4) {x <- "4"}
+  else {x <- "5"}
+}
+
+bgdata$weight_group <- sapply(X = bgdata$weight, 
+                            FUN = convert_weight)
+```
+
+```{r}
+#Plot Code
+ggplot(bgdata,aes(weight,log(max_time), col=weight_group))+
+  with_bloom(geom_boxplot(fill="#231F20"),sigma=5,strength = 2)+
+  scale_color_manual(breaks = c("1", "2", "3", "4", "5"),
+                     values = c("#FDF202","#FF003C","#00F0FF","#EF3524","#D039DD"))+
+  scale_fill_manual(values = c("#231F20","#231F20","#231F20","#231F20","#231F20"))+
+  labs(x= "Weight",
+       y= "Log. Max Time",
+       title = "Weight vs Max Time",
+       subtitle = "Complexity by Max Time",
+       col = "Weights:")+
+  theme(legend.position="right",legend.direction="vertical",
+        legend.background = element_rect(fill="#231F20", color = "#231F20"),
+        legend.key = element_rect(fill="#231F20", color = "#231F20"),
+        legend.title = element_text(colour = "#FDF202", face ="bold", size = 9),
+        legend.text = element_text(color="White", face ="italic", family="OCR A Extended"),
+        legend.key.size= unit(0.5, 'cm'),
+        plot.background = element_rect(fill = "#231F20", color = "#231F20"),
+        panel.background = element_rect(fill = "#231F20"),
+        panel.grid = element_line(alpha(colour = "#231F20",alpha = 0.2)),
+        panel.grid.major.x = element_line(colour ="#231F20"),
+        panel.grid.minor.x = element_line(colour ="#231F20"),
+        plot.title = element_text(colour = "#FDF202",face = "bold", family="Copperplate Gothic Bold"),
+        plot.subtitle = element_text(colour = "#F2F2F2", face = "italic", size = 10),
+        axis.title.x = element_text(colour = "#FDF202",family="OCR A Extended",face="bold"),
+        axis.title.y = element_text(colour = "#FDF202",family="OCR A Extended",face="bold"),
+        axis.text.x=element_text(color="White",family="OCR A Extended", face="italic"),
+        axis.text.y=element_text(color="White", face="italic", family = "OCR A Extended"))
+```
+
+## Relationship between Weight and Age Group
+
+```{r}
+#Plot Code
+ggplot(bgdata, aes(x=age_group,weight,col=weight_group)) +
+  with_bloom(geom_jitter( size=0.7),strength = 1)+
+  scale_color_manual(breaks = c("1", "2", "3", "4", "5"),
+                     values = c("#FDF202","#FF003C","#00F0FF","#EF3524","#D039DD"))+
+  scale_x_discrete(limits = c("0-5", "6-10", "11-15","16-20","21+"))+
+  labs(x= "Age",
+       y= "Weight",
+       title = "Weight vs Age Group",
+       subtitle = "Relationship between Weight and Age Group",
+       col = "Weights:")+
+  theme(legend.position="right",legend.direction="vertical",
+        legend.background = element_rect(fill="#231F20", color = "#231F20"),
+        legend.key = element_rect(fill="#231F20", color = "#231F20"),
+        legend.title = element_text(colour = "#FDF202", face ="bold", size = 9),
+        legend.text = element_text(color="White", face ="italic", family="OCR A Extended"),
+        plot.background = element_rect(fill = "#231F20", color = "#231F20"),
+        panel.background = element_rect(fill = "#231F20"),
+        panel.grid = element_line(alpha(colour = "#231F20",alpha = 0.2)),
+        panel.grid.minor.x = element_line(colour ="#231F20"),
+        plot.title = element_text(colour = "#FDF202",face = "bold", family="Copperplate Gothic Bold"),
+        plot.subtitle = element_text(colour = "#F2F2F2", face = "italic", size = 10),
+        axis.title.x = element_text(colour = "#FDF202",family="OCR A Extended",face="bold"),
+        axis.title.y = element_text(colour = "#FDF202",family="OCR A Extended",face="bold"),
+        axis.text.x=element_text(color="White",family="OCR A Extended", face="italic"),
+        axis.text.y=element_text(color="White", face="italic", family = "OCR A Extended"))
+```
+
+## Relationship between Weight and Rating Group
+
+```{r}
+#Plot Code
+ggplot(bgdata, aes(weight,geek_group,col=weight_group)) +
+  with_bloom(geom_jitter( size=0.7),strength = 1)+
+  scale_color_manual(breaks = c("1", "2", "3","4","5"),
+                     values = c("#FDF202","#FF003C","#00F0FF","#EF3524","#D039DD"))+
+  scale_x_discrete(limits = c("0-5", "6-10", "11-15","16-20","21+"))+
+  labs(x= "Weight",
+       y= "Rating",
+       title = "Rating vs Weight Group",
+       subtitle = "Relationship between Rating and Weight Group",
+       col = "Weights:")+
+  theme(legend.position="right",legend.direction="vertical",
+        legend.background = element_rect(fill="#231F20", color = "#231F20"),
+        legend.key = element_rect(fill="#231F20", color = "#231F20"),
+        legend.title = element_text(colour = "#FDF202", face ="bold", size = 9),
+        legend.text = element_text(color="White", face ="italic", family="OCR A Extended"),
+        plot.background = element_rect(fill = "#231F20", color = "#231F20"),
+        panel.background = element_rect(fill = "#231F20"),
+        panel.grid = element_line(alpha(colour = "#231F20",alpha = 0.2)),
+        panel.grid.minor.x = element_line(colour ="#231F20"),
+        plot.title = element_text(colour = "#FDF202",face = "bold", family="Copperplate Gothic Bold"),
+        plot.subtitle = element_text(colour = "#F2F2F2", face = "italic", size = 10),
+        axis.title.x = element_text(colour = "#FDF202",family="OCR A Extended",face="bold"),
+        axis.title.y = element_text(colour = "#FDF202",family="OCR A Extended",face="bold"),
+        axis.text.x=element_text(color="White",family="OCR A Extended", face="italic"),
+        axis.text.y=element_text(color="White", face="italic", family = "OCR A Extended"))
+```
+
+
